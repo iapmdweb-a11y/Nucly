@@ -1,52 +1,75 @@
-# NUCLY v2 — Installable IHC Nuclear Counter
+# NUCLY — installable PWA (no Netlify credits needed)
 
-NUCLY is a local, privacy-preserving immunohistochemistry (IHC) nuclear counter built with OpenCV.js. All images are processed on-device — nothing is uploaded anywhere.
-
-This folder is a **PWA (Progressive Web App)**: one codebase that installs as a native-looking app on **Windows, macOS, Android, and iOS**.
-
-## Folder contents
+Full mirror of `https://gorgeous-pika-031dbb.netlify.app/` plus the **three PWA
+files the live site was missing** (its HTML referenced them but they returned 404,
+so nothing was installable):
 
 | File | Purpose |
-|------|---------|
-| `index.html` | The NUCLY app itself |
-| `opencv.js` | OpenCV engine (bundled locally for offline use) |
-| `manifest.webmanifest` | PWA manifest (makes it installable) |
-| `sw.js` | Service worker (enables offline mode) |
-| `icons/` | App icons (192, 512, apple-touch) |
+|---|---|
+| `manifest.webmanifest` | Makes browsers offer "Install app" |
+| `pwa.js` | Install button, iOS/Android guidance, Save-for-offline, offline indicator |
+| `sw.js` | Offline cache (includes the 11 MB OpenCV engine) |
 
-## How to run it
+All other files were copied unchanged from the live site.
 
-PWAs must be served over HTTP (browsers refuse the manifest on `file://`). Two options:
+## Option 1 — Install on your own devices now (zero credits, works offline)
 
-### Option A — Local server (works fully offline, one command)
+Your machine has no Node/Python/git, so this folder ships a tiny PowerShell
+server that needs nothing installed.
+
+**Desktop (this PC):**
+1. Double-click **`NUCLY.bat`** (admin is not required).
+2. A browser tab opens at `http://localhost:8800`.
+3. Click **Install app** in the header → NUCLY installs as a fullscreen Windows app.
+
+**Mobile (same Wi-Fi):**
+1. Right-click `NUCLY.bat` → **Run as administrator** (admin is needed to serve on
+   the network), then note the `http://<your-ip>:8800` address it prints.
+2. On the phone/tablet browser open that address:
+   - Android: **Install app** or menu → Add to Home screen.
+   - iPhone/iPad: Safari → Share → **Add to Home Screen**.
+3. Connection comes from your Wi-Fi only; after the first load, NUCLY works
+   **offline** (the service worker caches everything, OpenCV included).
+
+To keep LAN access permanent without entering admin each time:
 ```powershell
-# from the nucly-app folder
-npx --yes serve .
+netsh http add urlacl url=http://+:8800/ user=Everyone          # once, as admin
+netsh advfirewall firewall add rule name="NUCLY" dir=in action=allow protocol=TCP localport=8800
 ```
-or with Python:
+
+## Option 2 — Publish publicly for free (HTTPS, installable anywhere)
+
+Static hosts give you HTTPS for free so any device can install the PWA from the
+URL. No Netlify credits are involved.
+
+### GitHub Pages (browser-only, ~2 min)
+1. Go to https://github.com/new → create a repo, e.g. `nucly`.
+2. Open the repo → **Add file → Upload files** → drag in the contents of this folder
+   (all of it, top level). Commit.
+3. Repo → **Settings → Pages** → Source: **Deploy from a branch** → `main` / root → Save.
+4. Wait a minute. Your URL: `https://<username>.github.io/nucly/` — open it, click **Install app**.
+
+### Cloudflare Pages (browser-only)
+1. Go to https://dash.cloudflare.com → **Workers & Pages → Create → Pages → Upload assets**.
+2. Drag this folder in, deploy, get `https://<project>.pages.dev` HTTPS URL.
+
+### Vercel (no CLI needed)
+1. Go to https://vercel.com/new → **Deploy without Git** → drag the folder → deploy.
+
+### Surge (one command, needs Node or a browser download)
 ```powershell
-python -m http.server 8080
+npm i -g surge
+surge C:\Users\rifae\OneDrive\Documents\Default Project\nucly-live
 ```
-Then open `http://localhost:8080` in your browser.
 
-### Option B — Host online (so it's available on any device, anywhere)
-Upload the `nucly-app` folder to GitHub Pages / Netlify / Vercel and open the URL. The app then installs from the same URL on every device.
+After publishing, the green **Install app** button appears in the header:
+- Windows/macOS (Edge/Chrome): click **Install app**.
+- Android (Chrome): Install app / Add to Home screen.
+- iPhone/iPad (Safari): Share → **Add to Home Screen** (the button hides itself on iOS automatically).
 
-## Install on Desktop (Windows / macOS)
-
-**Install button:** while the app is open, click **⬇️ Install App** (top panel) and confirm.
-
-Alternatively, via browser menu:
-- **Windows (Edge or Chrome):** click the app icon in the address bar (⊕ Install), or menu → **Apps → Install NUCLY**. You'll get a Start menu / desktop shortcut that opens fullscreen, no browser chrome.
-- **macOS (Chrome/Edge):** menu → **Install NUCLY** (adds to Applications / Dock).
-
-## Install on Mobile (Android / iOS)
-
-- **Android (Chrome):** menu (⋮) → **Add to Home screen / Install app**. You get a fullscreen app icon in your launcher. Works offline after first load.
-- **iPhone / iPad (Safari):** Share (⬆️) → **Add to Home Screen**. Icon appears on the home screen; opens fullscreen.
-
-## Notes
-
-- Fully **offline** after the first visit (OpenCV runtime is bundled).
-- Tip for phone-camera microscopy photos: use **✨ Auto-Enhance** before AI analysis.
-- App loads OpenCV in the background; wait for "OpenCV Ready" in the status bar before running AI.
+## Local checks before publishing
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\start-nucly.ps1
+```
+Then at `http://localhost:8800` verify: **Install app** appears, **Save for offline**
+shows a progress bar, and after saving, the site works with Wi-Fi off.
