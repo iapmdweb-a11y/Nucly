@@ -1,0 +1,33 @@
+{
+  "name": "NUCLY - IHC Nuclear Counter",
+  "short_name": "NUCLY",
+  "description": "NUCLY v2 — IHC Nuclear Counter. Local, privacy-preserving immunohistochemistry nuclear counting with OpenCV.js.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "lang": "en",
+  "categories": ["medical", "productivity", "health"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
