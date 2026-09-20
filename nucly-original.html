@@ -144,9 +144,6 @@ canvas{
 .negText{
     color:blue;
 }
-.weakText{
-    color:#ff8c00;
-}
 
 /* Floating results panel near viewer */
 #resultsFloat{
@@ -372,9 +369,9 @@ Blue sensitivity: <input type="range" id="blueLevel" min="10" max="120" value="3
 <p><b>1. Upload Image</b> — Select an immunohistochemistry (IHC) stained histopathology image (JPG/PNG). Works for any nuclear IHC marker such as ER, PR, Ki-67, p53, etc.<br>
 <span style="color:#888;font-size:12px;">💡 <i>Tip for phone camera photos:</i> Keep the slide field flat and evenly lit. Avoid glare. After uploading, click ✨ <b>Auto-Enhance</b> to optimize the image automatically before running AI.</span></p>
 
-<p><b>2. AI Analysis</b> — Click "Start AI Analysis" to auto-detect strong positive (brown/black DAB), weak/blush positive (pale brown), and negative (blue hematoxylin) nuclei. Weak positives are shown as 🟠 orange dots for observer review.</p>
+<p><b>2. AI Analysis</b> — Click "Start AI Analysis" to auto-detect strong positive (brown/black DAB) and negative (blue hematoxylin) nuclei.</p>
 
-<p><b>3. Manual Correction</b> — Use 🔴 Strong Positive / 🟠 Weak/Blush / 🔵 Negative to add missed nuclei. AI = filled dots, Manual = hollow rings. The IHC Index shows both Strong-only and All-Positive (strong + weak) percentages.</p>
+<p><b>3. Manual Correction</b> — Use 🔴 Strong Positive / 🔵 Negative to add missed nuclei, or 🧹 Erase to remove incorrect ones. AI = filled dots, Manual = hollow rings. The IHC Index shows the Strong-positive percentage.</p>
 
 <p><b>4. Erase</b> — Select 🧹 Erase, adjust brush size, then click &amp; drag to remove incorrect AI or manual markers.</p>
 
@@ -409,18 +406,16 @@ Blue sensitivity: <input type="range" id="blueLevel" min="10" max="120" value="3
 <li><b>Blue sensitivity</b> — How strictly the AI filters for hematoxylin (blue) negative nuclei. Increase to catch pale blue nuclei; decrease if non-nuclear blue areas (collagen, mucin) are being counted. For phone camera images, try ~30–40 to avoid overcounting background.</li>
 </ul>
 
-<p><b>8. Weak / Blush Staining Guide</b> — Clinically important for ER, PR, and other markers where any nuclear staining counts as positive:</p>
+<p><b>8. IHC Index Explained</b> — Understand the scoring shown after detection:</p>
 <ul style="margin:4px 0 8px 20px;">
-<li>🟠 <b>Orange dots</b> = Weak/blush DAB staining that the AI detected but classified as low-intensity. These are <b>NOT</b> included in the main IHC Index by default.</li>
-<li><b>IHC Index (Strong)</b> = Only 🔴 strong brown/black nuclei counted as positive. Use this for strict scoring (e.g., Ki-67 where only clear staining matters).</li>
-<li><b>All Pos %</b> = 🔴 Strong + 🟠 Weak counted together. Use this for ER/PR where any nuclear staining is considered positive per ASCO/CAP guidelines.</li>
-<li><b>Manual reclassification</b> — Click a 🟠 orange dot with 🔴 Strong + button to upgrade it to strong positive. Or erase it if you think it's artifact. Your choice is recorded in the report.</li>
-<li><b>Phone camera tip</b> — Weak staining is hardest for AI. If many nuclei are unmarked (no dot at all), lower DAB sensitivity to ~20. If too many blue nuclei turn orange, raise it to ~50.</li>
+<li><b>IHC Index</b> = Only 🔴 strong brown/black nuclei counted as positive. Use this for strict scoring (e.g., Ki-67 where only clear staining matters).</li>
+<li><b>Manual reclassification</b> — Click a marker with the 🔴 Strong + button to reclassify it as strong positive, or erase it if you think it's artifact. Your choice is recorded in the report.</li>
+<li><b>Phone camera tip</b> — Detection is hardest on phone camera photos. If many nuclei are unmarked (no dot at all), lower DAB sensitivity to ~20. If too many negatives turn positive, raise it to ~50.</li>
 </ul>
 
-<p><b>9. Export</b> — Save annotated PNG, CSV of coordinates, session JSON, or print the full report. The report includes both Strong-only and All-Positive IHC indices.</p>
+<p><b>9. Export</b> — Save annotated PNG, CSV of coordinates, session JSON, or print the full report. The report includes the IHC Index.</p>
 
-<p><b>Shortcuts:</b> 1=Strong Positive, 2=Negative, 3=Erase, 4=Weak/Blush, R=ROI, Ctrl+Z=Undo, Ctrl+Y=Redo, Esc=Cancel</p>
+<p><b>Shortcuts:</b> 1=Strong Positive, 2=Negative, 3=Erase, R=ROI, Ctrl+Z=Undo, Ctrl+Y=Redo, Esc=Cancel</p>
 
 <hr style="border:none;border-top:1px solid #ddd;margin:15px 0;">
 
@@ -433,7 +428,7 @@ NUCLY is a nuclei detection and counting tool for microscopy and histology image
 Detection Parameters: Min/Max Nucleus Size filters debris and splits clusters. Confidence Threshold controls strictness. Stain Type is always set to <b>DAPI</b> for optimal nuclear detection. Start with defaults and refine after reviewing the first pass.</p>
 
 <p><b>Reviewing Results</b><br>
-🔴 <b>Red dots</b> = Strong Positive (brown/black DAB). 🟠 <b>Orange dots</b> = Weak/Blush Positive (pale brown) — shown for observer review. 🔵 <b>Blue dots</b> = Negative (blue hematoxylin). <b>Green outlines</b> = Segmentation boundaries. Zoom with mouse wheel, pan by click-drag. Toggle layers in the layer panel.</p>
+🔴 <b>Red dots</b> = Strong Positive (brown/black DAB). 🔵 <b>Blue dots</b> = Negative (blue hematoxylin). <b>Green outlines</b> = Segmentation boundaries. Zoom with mouse wheel, pan by click-drag. Toggle layers in the layer panel.</p>
 
 <p><b>Manual Corrections</b><br>
 Add Nucleus, Remove Nucleus, Accept Rejected, Reject Accepted, Merge/Split for clusters. Manual corrections are saved automatically per session. <b>Export before closing the tab.</b></p>
@@ -619,7 +614,6 @@ function toggleFullscreen(){
 function setMode(m){
     app.mode=m;
     let text="Positive";
-    if(m==="weak") text="Weak / Blush";
     if(m==="neg") text="Negative";
     if(m==="erase") text="Erase (drag to brush-erase)";
     document.getElementById("currentMode").innerHTML=text;
