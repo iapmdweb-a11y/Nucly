@@ -1330,9 +1330,10 @@ function analyzeNuclei(src){
     cv.inRange(hsv, brownLow1, brownHigh1, mask1);
     cv.bitwise_or(posMask, mask1, posMask);
 
-    // Range 2: Dark / blackish nuclei (low value, low saturation, broad hue)
+    // Range 2: Dark / blackish nuclei (low value, low saturation)
+    // Hue restricted to 0-90 so dark BLUE hematoxylin nuclei are NOT stolen as positive
     let brownLow2 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(0, 0, 0, 0));
-    let brownHigh2 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(180, Math.max(20, dabSensitivity-25), 80, 255));
+    let brownHigh2 = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(90, Math.max(20, dabSensitivity-25), 80, 255));
     let mask2 = new cv.Mat();
     cv.inRange(hsv, brownLow2, brownHigh2, mask2);
     cv.bitwise_or(posMask, mask2, posMask);
@@ -1345,8 +1346,8 @@ function analyzeNuclei(src){
     cv.bitwise_or(posMask, mask3, posMask);
 
     // Range 4: PURPLE / PLUM POSITIVE
-    // OpenCV HSV hue is 0-179; hue around 159 is included here.
-    let purpleLow = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(150, Math.max(10, dabSensitivity-20), 20, 0));
+    // OpenCV HSV hue is 0-179; starts at 158 so it never overlaps the blue negative range
+    let purpleLow = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(158, Math.max(10, dabSensitivity-20), 20, 0));
     let purpleHigh = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(175, 255, 230, 255));
     let mask4 = new cv.Mat();
     cv.inRange(hsv, purpleLow, purpleHigh, mask4);
@@ -1359,9 +1360,10 @@ function analyzeNuclei(src){
     let blushMask = new cv.Mat();
     cv.inRange(hsv, blushLow, blushHigh, blushMask);
 
-    // --- NEGATIVE (hematoxylin / blue) nuclei ---
-    let blueLow = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(80, blueSensitivity, 20, 0));
-    let blueHigh = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(148, 255, 255, 255));
+    // --- NEGATIVE (hematoxylin / blue / violet) nuclei ---
+    // Wider hue range (90-158) and a lower saturation floor so pale blue nuclei are caught
+    let blueLow = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(90, Math.max(8, blueSensitivity-25), 10, 0));
+    let blueHigh = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), new cv.Scalar(158, 255, 255, 255));
     let blueMask = new cv.Mat();
     cv.inRange(hsv, blueLow, blueHigh, blueMask);
 
@@ -1369,8 +1371,12 @@ function analyzeNuclei(src){
     cv.morphologyEx(posMask, posMask, cv.MORPH_OPEN, kernel);
     cv.morphologyEx(blueMask, blueMask, cv.MORPH_OPEN, kernel);
 
-    detectNuclei(posMask, "pos", minSize);
-    detectNuclei(blueMask, "neg", minSize);
+    // Split touching / overlapping nuclei (watershed) before counting
+    let posSep = separateNuclei(posMask);
+    let blueSep = separateNuclei(blueMask);
+
+    detectNuclei(posSep, "pos", minSize);
+    detectNuclei(blueSep, "neg", minSize);
 
     brownLow1.delete(); brownHigh1.delete(); mask1.delete();
     brownLow2.delete(); brownHigh2.delete(); mask2.delete();
@@ -1383,6 +1389,8 @@ function analyzeNuclei(src){
     blueHigh.delete();
     posMask.delete();
     blueMask.delete();
+    posSep.delete();
+    blueSep.delete();
     kernel.delete();
 }
 
