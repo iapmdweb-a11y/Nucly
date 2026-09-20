@@ -241,7 +241,6 @@ canvas{
 <div class="panel">
 <h3>Manual Counting</h3>
 <button onclick="setMode('pos')">🔴 Strong +</button>
-<button onclick="setMode('weak')">🟠 Weak / Blush</button>
 <button onclick="setMode('neg')">🔵 Negative</button>
 <button onclick="setMode('erase')">🧹 Erase</button>
 <button onclick="undo()">Undo</button>
@@ -251,7 +250,6 @@ Current Mode: <b id="currentMode">Positive</b>
 <br><br>
 <div style="font-size:12px;color:#666;margin-bottom:6px;">
   <span style="display:inline-block;width:10px;height:10px;background:red;border-radius:50%;margin-right:4px;"></span>Strong Pos &nbsp;
-  <span style="display:inline-block;width:10px;height:10px;background:#ff8c00;border-radius:50%;margin-right:4px;"></span>Weak Pos &nbsp;
   <span style="display:inline-block;width:10px;height:10px;background:blue;border-radius:50%;margin-right:4px;"></span>Neg &nbsp;
   <span style="display:inline-block;width:10px;height:10px;border:2px solid red;border-radius:50%;margin-right:4px;"></span>Manual &nbsp;
 </div>
@@ -322,10 +320,6 @@ Blue sensitivity: <input type="range" id="blueLevel" min="10" max="120" value="3
   <div class="countBox">
     <div class="countLabel">Strong +</div>
     <div class="countValue posText" id="positiveCount">0</div>
-  </div>
-  <div class="countBox">
-    <div class="countLabel">Weak / Blush</div>
-    <div class="countValue weakText" id="weakCount">0</div>
   </div>
   <div class="countBox">
     <div class="countLabel">Negative</div>
@@ -759,7 +753,8 @@ function updateCount(){
     let weak = app.markers.filter(m=>m.type==="weak").length;
     let neg = app.markers.filter(m=>m.type==="neg").length;
     document.getElementById("positiveCount").innerHTML=pos;
-    document.getElementById("weakCount").innerHTML=weak;
+    let wc = document.getElementById("weakCount");
+    if(wc) wc.innerHTML=weak;
     document.getElementById("negativeCount").innerHTML=neg;
     let total=pos+weak+neg;
     let kiStrong = total ? ((pos/total)*100).toFixed(1) : 0;
@@ -1725,7 +1720,6 @@ function exportPDFReport(){
     <table>
     <tr><th>Parameter</th><th>Result</th></tr>
     <tr><td>Strong Positive nuclei</td><td>${pos.length}</td></tr>
-    <tr><td>Weak / Blush nuclei</td><td>${weak.length}</td></tr>
     <tr><td>Negative nuclei</td><td>${neg.length}</td></tr>
     <tr><td>IHC Index (Strong)</td><td>${ki}%</td></tr>
     <tr><td>IHC Index (All Positive)</td><td>${kiAll}%</td></tr>
