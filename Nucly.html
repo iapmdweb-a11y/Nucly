@@ -8,8 +8,44 @@ function gridKey(r,c){ return r+','+c; }
 function toggleGrid(){ if(!app.grid)return; app.grid.enabled=!app.grid.enabled; if(document.getElementById('gridEnabledVal'))document.getElementById('gridEnabledVal').textContent=app.grid.enabled?'On':'Off'; updateGridLayout(); if(typeof redraw==='function')redraw(); }
 function setGridSize(v){ if(!app.grid)return; app.grid.cellSize=Math.max(4,parseInt(v)||20); if(document.getElementById('gridSizeVal'))document.getElementById('gridSizeVal').textContent=app.grid.cellSize; updateGridLayout(); if(typeof redraw==='function')redraw(); }
 function setGridMode(m){ if(app.grid) app.grid.mode=m; }
-function clearGrid(){ if(!app.grid)return; app.grid.cells={}; updateGridCounts(); if(typeof redraw==='function')redraw(); }
-function updateGridLayout(){ if(!app.grid||!app.imageLoaded||!window.sourceImage||!sourceImage.width){ app.grid.cols=app.grid.rows=0; return;} const cs=app.grid.cellSize; app.grid.cols=Math.ceil(sourceImage.width/cs); app.grid.rows=Math.ceil(sourceImage.height/cs); }
+function clearGrid(){ if(!app.grid)return; app.grid.cells={}; updateGridCounts(); if(typeof function redraw(){
+    overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
+    if(!app.imageLoaded) return;
+    imageCtx.save();
+    imageCtx.translate(app.pan.x, app.pan.y);
+    imageCtx.scale(app.zoom, app.zoom);
+    imageCtx.drawImage(sourceImage, 0,0);
+    imageCtx.restore();
+    if(app.grid && app.grid.enabled){
+        gridDrawOverlay(overlayCtx, sourceImage.width, sourceImage.height, app.pan.x, app.pan.y, app.zoom);
+    }
+}
+window.addEventListener('keydown', function(e){
+  if((e.target.tagName=='INPUT' || e.target.tagName=='TEXTAREA')) return;
+  if(e.key=='g' || e.key=='G'){ e.preventDefault(); toggleGrid(); }
+  if(app.grid && app.grid.enabled){
+    if(e.key=='1'){ e.preventDefault(); setGridMode('pos'); }
+    if(e.key=='2'){ e.preventDefault(); setGridMode('neg'); }
+    if(e.key=='3'){ e.preventDefault(); setGridMode('excl'); }
+    if(e.key=='0'){ e.preventDefault(); setGridMode('erase'); }
+  }
+});
+
+overlayCanvas.addEventListener('mousemove', function(e){
+  if(app.grid && app.grid.enabled && app.grid.painting){
+    const rect = overlayCanvas.getBoundingClientRect();
+    const sx = (e.clientX-rect.left)/app.zoom - app.pan.x/app.zoom;
+    const sy = (e.clientY-rect.top)/app.zoom - app.pan.y/app.zoom;
+    paintGridAt(sx,sy); if(typeof redraw==='function') redraw();
+  }
+});
+overlayCanvas.addEventListener('mousedown', function(e){
+  if(app.grid && app.grid.enabled){ const rect=overlayCanvas.getBoundingClientRect(); const sx=(e.clientX-rect.left)/app.zoom-app.pan.x/app.zoom; const sy=(e.clientY-rect.top)/app.zoom-app.pan.y/app.zoom; app.grid.painting=true; paintGridAt(sx,sy); if(typeof redraw==='function')redraw(); return; }
+});
+overlayCanvas.addEventListener('mouseup', function(e){ if(app.grid && app.grid.painting){ app.grid.painting=false; app.grid.lastCell=null; } });
+overlayCanvas.addEventListener('mouseleave', function(e){ if(app.grid){ app.grid.painting=false; app.grid.lastCell=null; } });
+window.addEventListener('mouseup', function(e){ if(app.grid){ app.grid.painting=false; app.grid.lastCell=null; } });
+
 function gridCellAt(x,y){ if(!app.grid||!app.grid.enabled||app.grid.cols==0)return null; const cs=app.grid.cellSize,r=Math.floor(y/cs),c=Math.floor(x/cs); if(r<0||c<0||r>=app.grid.rows||c>=app.grid.cols)return null; return {r,c}; }
 function setGridCell(x,y,mode){ const g=gridCellAt(x,y); if(!g)return; const k=g.r+','+g.c; if(mode=='erase'){ delete app.grid.cells[k]; } else { app.grid.cells[k]=mode; } updateGridCounts(); }
 function paintGridAt(x,y){ setGridCell(x,y, app.grid?app.grid.mode:'pos'); }
@@ -40,5 +76,11 @@ function gridDrawOverlay(ctx, imgW, imgH, panX, panY, zoom){
   for(let r=0;r<=app.grid.rows;r++){ ctx.moveTo(0,r*cs); ctx.lineTo(imgW,r*cs); }
   ctx.stroke();
   ctx.restore();
+}
+function getCanvasPos(e){
+  const rect = overlayCanvas.getBoundingClientRect();
+  const sx = (e.clientX - rect.left)/app.zoom - app.pan.x/app.zoom;
+  const sy = (e.clientY - rect.top)/app.zoom - app.pan.y/app.zoom;
+  return {x:sx,y:sy};
 }
 </script>
